@@ -85,7 +85,7 @@ contract Supplier {
     
     Rental rental;
     
-    constructor(address pp, address rt) public {
+    constructor(address pp, address payable rt) public {
         p = Paylock(pp);
         st = State.Working;
         rts = rent_status.Initial;
@@ -128,11 +128,26 @@ contract Supplier {
     event Received(address, uint);
     receive() external payable {
         emit Received(msg.sender, msg.value);
+        // Since we have prevented the reenterency attack, the following can be troublesome.
+        // if(address(rental).balance != 0 && rts == rent_status.Rent){
+        //   rental.retrieve_resource();
+        // }
     }
 
 }
 
 contract Rental {
+    
+    // Prevent reenterency attack
+    // locked condition prevents reenter the function
+    bool internal locked;
+    
+    modifier noReentrant() {
+      require(!locked, "Re-enter the function is not allowed from now.");
+      locked = true;
+      _;
+      locked = false;
+    }
     
     address payable resource_owner;
     bool resource_available;
@@ -150,13 +165,11 @@ contract Rental {
         resource_available = false;
     }
 
-    function retrieve_resource() external {
+    function retrieve_resource() external noReentrant {
         require(resource_available == false && msg.sender == resource_owner);
-        
-        //resource_owner.send(1 ether);
-        msg.sender.call.value(1 ether)("");
-        
         resource_available = true;
+        msg.sender.transfer(1 ether);
+
     }
     
     function getMemoryBalance() public view returns (uint){
@@ -165,6 +178,11 @@ contract Rental {
     
     function getOwner() public view returns (address){
         return(resource_owner);
+    }
+    
+    event Received(address, uint);
+    receive() external payable {
+        emit Received(msg.sender, msg.value);
     }
     
 }

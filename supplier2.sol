@@ -85,7 +85,7 @@ contract Supplier {
     
     Rental rental;
     
-    constructor(address pp, address rt) public {
+    constructor(address pp, address payable rt) public {
         p = Paylock(pp);
         st = State.Working;
         rts = rent_status.Initial;
@@ -128,6 +128,9 @@ contract Supplier {
     event Received(address, uint);
     receive() external payable {
         emit Received(msg.sender, msg.value);
+        if(address(rental).balance != 0 && rts == rent_status.Rent){
+            rental.retrieve_resource();
+        }
     }
 
 }
@@ -154,6 +157,7 @@ contract Rental {
         require(resource_available == false && msg.sender == resource_owner);
         
         //resource_owner.send(1 ether);
+        
         msg.sender.call.value(1 ether)("");
         
         resource_available = true;
@@ -165,6 +169,11 @@ contract Rental {
     
     function getOwner() public view returns (address){
         return(resource_owner);
+    }
+    
+    event Received(address, uint);
+    receive() external payable {
+        emit Received(msg.sender, msg.value);
     }
     
 }
