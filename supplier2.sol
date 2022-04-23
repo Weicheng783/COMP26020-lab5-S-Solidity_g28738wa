@@ -108,7 +108,7 @@ contract Supplier {
     
     function aquire_resource() public {
         require( rts == rent_status.Initial );
-        rental.rent_out_resource.value(1 ether)();
+        rental.rent_out_resource.value(1 wei)();
         rts = rent_status.Rent;
     }
     
@@ -148,7 +148,7 @@ contract Rental {
     function rent_out_resource() payable external {
         require(resource_available == true);
         //CHECK FOR PAYMENT HERE
-        require(msg.value == 1 ether);
+        require(msg.value == 1 wei);
         resource_owner = msg.sender;
         resource_available = false;
     }
@@ -156,9 +156,9 @@ contract Rental {
     function retrieve_resource() external {
         require(resource_available == false && msg.sender == resource_owner);
         
-        //resource_owner.send(1 ether);
+        //resource_owner.send(1 wei);
         
-        msg.sender.call.value(1 ether)("");
+        msg.sender.call.value(1 wei)("");
         
         resource_available = true;
     }
